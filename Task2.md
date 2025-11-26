@@ -1,194 +1,170 @@
-# Tache 2 : Construire une chaîne d'outils de compilation croisée #
-1. Descriptions :
-Les outils de développement habituels disponibles sur une station de travail GNU/Linux
-constituent une chaîne de compilation native.
-Cette chaîne de compilation fonctionne sur votre station de travail et génère du code pour
-celle-ci, généralement pour l'architecture x86.
-Pour le développement de systèmes embarqués, il est généralement impossible ou peu
-intéressant d'utiliser une chaîne de compilation native.
-► La cible est trop limitée en termes de stockage et/ou de mémoire.
-►La cible est très lente comparée à votre station de travail.
-►Vous ne souhaitez peut-être pas installer tous les outils de développement sur votre
-cible.
-C'est pourquoi les chaînes de compilation croisées sont généralement utilisées. Elles
-s'exécutent sur votre station de travail mais génèrent du code pour votre cible.
+# Task 2: Building a Cross-Compilation Toolchain
+
+## 1. Description
+The usual development tools available on a GNU/Linux workstation constitute a native compilation chain.
+This compilation chain runs on your workstation and generates code for it, typically for the x86 architecture.
+For embedded systems development, it is generally impossible or not interesting to use a native compilation chain.
+► The target is too limited in terms of storage and/or memory.
+► The target is very slow compared to your workstation.
+► You may not want to install all development tools on your target.
+That is why cross-compilation chains are generally used. They run on your workstation but generate code for your target.
+
 ---
 ![alt text](images/image2-1.png)
 ---
 
-2. Composants d'une Chaîne de Compilation Croisée:
+## 2. Components of a Cross-Compilation Chain
 
 ---
 ![alt text](images/image2-2.png)
 ---
-• Binutils : Un ensemble d'outils pour la manipulation des fichiers binaires, incluant des utilitaires comme l'assembleur et l'éditeur de liens essentiels pour la gestion des fichiers objets.
 
-• En-têtes du noyau : Fichiers indispensables pour établir l'interface entre les programmes utilisateur et le noyau, garantissant la compatibilité avec le système cible.
+*   **Binutils**: A set of tools for manipulating binary files, including utilities like the assembler and linker, essential for managing object files.
+*   **Kernel Headers**: Files essential for establishing the interface between user programs and the kernel, ensuring compatibility with the target system.
+*   **C/C++ Libraries**: Standard libraries, such as libc for C or the standard C++ library, which provide the basic functions necessary for program execution.
+*   **C/C++ Compiler**: The compiler responsible for converting C/C++ source code into binary executables for a specific target architecture.
+*   **GDB Debugger (optional)**: A debugging tool allowing analysis and correction of compiled programs, particularly useful for debugging on the target.
 
-• Bibliothèques C/C++ : Les bibliothèques standards, telles que libc pour le C ou la bibliothèque standard C++, qui fournissent les fonctions de base nécessaires à l'exécution des programmes.
+## 3. Specific Objectives
 
-• Compilateur C/C++ : Le compilateur chargé de convertir le code source en C/C++ en exécutables binaires pour une architecture cible spécifique.
+*   ► Be able to understand the foundations of cross-compilation.
+*   ► Be able to install and configure Crosstool-NG.
+*   ► Be able to generate a cross-compiler for Raspberry Pi 3 (aarch64 architecture).
+*   ► Be able to configure the execution environment for the cross-compiler.
 
-• Débogueur GDB (optionnel) : Un outil de débogage permettant d'analyser et de corriger les programmes compilés particulièrement utile pour le débogage sur la cible.
+## 4. Steps to Follow
 
-3. Objectifs spécifiques :
-
-• ► Être capable de comprendre les fondements de la compilation croisée.
-
-• ► Être capable d'installer et de configurer Crosstool-NG.
-
-• ► Être capable de générer un compilateur croisé pour Raspberry Pi 3 (architecture aarch64).
-
-• ► Être capable de configurer l'environnement d'exécution pour le compilateur croisé.
-
-4. Étapes à suivre :
-A.Installer les dépendances
+### A. Install Dependencies
 ```bash
 sudo apt install build-essential git autoconf bison flex texinfo help2man gawk libtool-bin \
  libncurses5-dev unzip gettext python3
 ```
-B. Installer et configurer Crosstool-NG
----
-* Getting Crosstool-ng
+
+### B. Install and Configure Crosstool-NG
+
+#### Getting Crosstool-ng
 ```bash
 git clone https://github.com/crosstool-ng/crosstool-ng
 cd crosstool-ng/
 git checkout crosstool-ng-1.28.0
 ```
----
-* Building and installing Crosstool-ng
-Comme nous ne construisons pas Crosstool-ng à partir d'une archive de version, mais à partir d'un dépôt git, nous devons d'abord générer un script configure et, plus généralement, tous les fichiers générés qui sont fournis dans l'archive source d'une version :
+
+#### Building and Installing Crosstool-ng
+Since we are not building Crosstool-ng from a release archive, but from a git repository, we must first generate a configure script and, more generally, all generated files that are provided in the source archive of a release:
 ```bash
 ./bootstrap
 ```
-Nous pouvons ensuite soit installer Crosstool-ng globalement sur le système, soit le garder localement dans son répertoire de téléchargement. Nous choisirons la dernière solution. Comme documenté à https://crosstool-ng.github.io/docs/install/#hackers-way
+We can then either install Crosstool-ng globally on the system or keep it locally in its download directory. We will choose the latter solution. As documented at https://crosstool-ng.github.io/docs/install/#hackers-way
 
 ```bash
 ./configure --enable-local
 make
 ./ct-ng help
 ```
-C. Configurer Crosstool-NG pour Raspberry Pi 3
 
-* Configurer la chaîne d'outils pour produire
+### C. Configure Crosstool-NG for Raspberry Pi 3
 
-Une seule installation de Crosstool-ng permet de produire autant de chaînes d'outils que vous le souhaitez, pour différentes architectures, avec différentes bibliothèques C et différentes versions des divers composants.
+#### Configure the Toolchain to Produce
+A single installation of Crosstool-ng allows producing as many toolchains as you want, for different architectures, with different C libraries and different versions of various components.
 
-Crosstool-ng est livré avec un ensemble de fichiers de configuration préfabriqués pour différentes configurations typiques : Crosstool-ng les appelle des échantillons. Ils peuvent être listés en utilisant 
+Crosstool-ng comes with a set of ready-made configuration files for different typical configurations: Crosstool-ng calls them samples. They can be listed using:
 ```bash 
 ./ct-ng list-samples 
 ```
 
-Nous allons charger l'échantillon Cortex A8. Chargez-le avec la commande 
+We will load the Cortex A8 sample. Load it with the command:
 ```bash 
 ./ct-ng  arm-cortex_a8-linux-gnueabi
 ```
-Ensuite, pour affiner la configuration, lançons l'interface menuconfig :
+Then, to refine the configuration, let's launch the menuconfig interface:
 ```bash 
 ./ct-ng  menuconfig
 ```
-Dans Path and misc options :
 
-Si ce n’est pas encore fait, activez Try features marked as EXPERIMENTAL.
+**In Path and misc options:**
+*   If not already done, enable `Try features marked as EXPERIMENTAL`.
 
-Dans Target options :
+**In Target options:**
+*   Set `Use specific FPU (ARCH_FPU)` to `vfpv3`.
+*   Set `Floating point` to `hardware (FPU)`.
 
-Définissez Use specific FPU (ARCH_FPU) sur vfpv3.
+**In Toolchain options:**
+*   Set `Tuple's vendor string (TARGET_VENDOR)` to `training`.
+*   Set `Tuple's alias (TARGET_ALIAS)` to `arm-linux`. Thus, we can use the compiler with `arm-linux-gcc`, a shorter name than the one based on the full toolchain tuple.
 
-Définissez Floating point sur hardware (FPU).
+**In Operating System:**
+*   Set `Version of linux` to the closest but earlier version than 6.6. It is important that the kernel headers used in the toolchain are not newer than the kernel that will run on the board (v6.6).
 
-Dans Toolchain options :
+**In C-library:**
+*   If not already done, set `C library` to `musl (LIBC_MUSL)`.
+*   Keep the default version proposed.
 
-Définissez Tuple's vendor string (TARGET_VENDOR) sur training.
+**In C compiler:**
+*   Set `Version of gcc` to `14.2.0`.
+*   Ensure that `C++ (CC_LANG_CXX)` is enabled.
 
-Définissez Tuple's alias (TARGET_ALIAS) sur arm-linux. Ainsi, nous pourrons utiliser le compilateur avec arm-linux-gcc, un nom plus court que celui basé sur le tuple complet de la toolchain.
+**In Debug facilities:**
+*   Remove all options here. Some debugging tools can be provided in the toolchain, but they can also be built via filesystem build tools.
 
-Dans Operating System :
+#### Produce the Toolchain
+Nothing is simpler:
+```bash
+./ct-ng build
+```
+The toolchain will be installed by default in `$HOME/x-tools/`. That’s something you could have changed in Crosstool-ng’s configuration.
 
-Définissez Version of linux sur la version la plus proche mais antérieure à 6.6. Il est important que les headers du noyau utilisés dans la toolchain ne soient pas plus récents que le noyau qui sera exécuté sur la carte (v6.6).
-
-Dans C-library :
-
-Si ce n’est pas encore fait, définissez C library sur musl (LIBC_MUSL).
-
-Conservez la version par défaut proposée.
-
-Dans C compiler :
-
-Définissez Version of gcc sur 14.2.0.
-
-Assurez-vous que C++ (CC_LANG_CXX) est activé.
-
-Dans Debug facilities :
-
-Supprimez toutes les options ici. Certains outils de débogage peuvent être fournis dans la toolchain, mais ils peuvent également être construits via des outils de construction du système de fichiers.
- Produce the toolchain
- Nothing is simpler:
- ```bash
- $ ./ct-ng build
- ```
- The toolchain will be installed by default in $HOME/x-tools/. That’s something you could have changed in
- Crosstool-ng’s configuration.
-
-D. Installer QEMU
-
-vous pouvez quand même exécuter ce binaire depuis votre machine hôte x86 ?
-Pour cela, installez l’émulateur utilisateur QEMU, qui n’émule que le jeu d’instructions cible, et non tout un système avec ses périphériques :
+### D. Install QEMU
+Can you still execute this binary from your x86 host machine?
+For this, install the QEMU user emulator, which only emulates the target instruction set, and not a whole system with its peripherals:
 ```bash
 sudo apt install qemu-user
- ```
-E. Compiler et tester un programme:
+```
 
-Vous pouvez maintenant tester votre toolchain en ajoutant $HOME/x-tools/arm-training-linux-musleabihf/bin/ à votre variable d’environnement PATH et en compilant le simple programme hello.c dans votre répertoire principal du labo avec arm-linux-gcc :
+### E. Compile and Test a Program
+You can now test your toolchain by adding `$HOME/x-tools/arm-training-linux-musleabihf/bin/` to your `PATH` environment variable and compiling the simple `hello.c` program in your main lab directory with `arm-linux-gcc`:
 ```bash
 arm-linux-gcc -o hello hello.c
- ```
- Vous pouvez utiliser la commande file sur votre binaire pour vérifier qu’il a bien été compilé pour l’architecture ARM.
+```
+You can use the `file` command on your binary to verify that it has indeed been compiled for the ARM architecture.
 ```bash
 file hello
- --- 
+--- 
 hello: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-musl-armhf.so.1, not stripped
 ---
 ```
-Ensuite, essayez de lancer l’émulateur utilisateur QEMU pour ARM :
+Then, try to launch the QEMU user emulator for ARM:
 ```bash
 qemu-arm hello
 ```
 
-Vous obtiendrez probablement une erreur :
-
+You will probably get an error:
+```text
 qemu-arm: Could not open '/lib/ld-musl-armhf.so.1': No such file or directory
+```
 ---
+What is happening is that `qemu-arm` cannot find the shared library loader (compiled for ARM) that this binary depends on.
 
-Ce qui se passe, c’est que qemu-arm ne trouve pas le chargeur de bibliothèques partagées (compilé pour ARM) dont dépend ce binaire.
-
-Localiser le chargeur de bibliothèques dans la toolchain
+#### Locate the Library Loader in the Toolchain
 ```bash
 find ~/x-tools-name -name ld-musl-armhf.so.1
 ```
 
-
-Vous devriez obtenir quelque chose comme :
-
----
+You should get something like:
+```text
 /home/tux/x-tools/arm-training-linux-musleabihf/arm-training-linux-musleabihf/sysroot/lib/ld-musl-armhf.so.1
+```
 
----
-Indiquer à QEMU où trouver les bibliothèques
-
-Vous pouvez maintenant utiliser l’option -L de qemu-arm pour lui indiquer où se trouvent les bibliothèques partagées :
+#### Tell QEMU Where to Find Libraries
+You can now use the `-L` option of `qemu-arm` to tell it where the shared libraries are located:
 ```bash
 qemu-arm -L ~/x-tools/arm-training-linux-musleabihf/arm-training-linux-musleabihf/sysroot hello
 ```
-on obtient:
-
----
+We get:
+```text
 Hello, ARM world!
----
-5. Documentation:
-Pour plus d'informations détaillées sur chaque étape et les outils utilisés, vous pouvez vous
-référer à la documentation Bootlin. Bootlin propose des ressources et formations complètes
-sur la compilation croisée, l'utilisation de Crosstool-NG et d'autres outils pour le
-développement sur des architectures embarquées.
+```
 
-. Bootlin Documentation : https://bootlin.com/doc/training/embedded-linux-bbb/embedded-linux-bbb-labs.pdf
+## 5. Documentation
+For more detailed information on each step and the tools used, you can refer to the Bootlin documentation. Bootlin offers comprehensive resources and training on cross-compilation, using Crosstool-NG, and other tools for development on embedded architectures.
+
+*   Bootlin Documentation: https://bootlin.com/doc/training/embedded-linux-bbb/embedded-linux-bbb-labs.pdf
