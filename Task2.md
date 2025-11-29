@@ -136,7 +136,7 @@ Then, try to launch the QEMU user emulator for ARM:
 ```bash
 qemu-arm hello
 ```
-
+![photo](images/image2-3.png)
 You will probably get an error:
 ```text
 qemu-arm: Could not open '/lib/ld-musl-armhf.so.1': No such file or directory
